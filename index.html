@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notion Sync Desktop</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero-mark">
+          <img src="./brand-mark.svg" alt="Notion Sync mark" />
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">Local Control Panel</p>
+          <h1>Notion Sync Desktop</h1>
+          <p class="lede">
+            A privacy-first cockpit for your local log pipeline. Inspect health, preview what will leave the machine,
+            and trigger direct or remote delivery into Notion.
+          </p>
+          <div class="hero-meta">
+            <div class="meta-card">
+              <strong>Private by default</strong>
+              <span>State stays encrypted on device.</span>
+            </div>
+            <div class="meta-card">
+              <strong>Remote-ready</strong>
+              <span>Works with your hosted Vercel intake.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls">
+        <button data-command="doctor">Doctor</button>
+        <button data-command="status">Status</button>
+        <button data-command="report">Report</button>
+        <button data-command="dry-run">Dry Run</button>
+        <button data-command="remote">Remote Upload</button>
+        <button data-command="run" class="primary">Run Upload</button>
+        <button id="open-page">Open Last Page</button>
+        <button data-command="help">Help</button>
+      </section>
+
+      <section class="panels">
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Quick Status</h2>
+            <span id="status-pill">Idle</span>
+          </div>
+          <pre id="status-output">Loading status...</pre>
+        </article>
+
+        <article class="panel panel-wide">
+          <div class="panel-head">
+            <h2>Command Output</h2>
+            <span id="last-command">status</span>
+          </div>
+          <pre id="command-output">Loading...</pre>
+        </article>
+      </section>
+    </main>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

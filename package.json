@@ -1,0 +1,13 @@
+{
+  "name": "notion-sync-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^36.0.0"
+  }
+}
