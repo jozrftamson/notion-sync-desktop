@@ -14,6 +14,8 @@ const DEFAULT_PROFILES = [
   { id: "supabase", name: "Supabase row", destination: "supabase", latest: 1, outputDir: "" },
 ];
 
+loadProjectEnv(path.join(CLI_CWD, ".env"));
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1180,
@@ -93,6 +95,117 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "") || "profile";
 }
 
+function loadProjectEnv(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+    const key = trimmed.slice(0, separator).trim();
+    const value = trimmed.slice(separator + 1).trim().replace(/^['"]|['"]$/g, "");
+    if (key && !process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
+
+async function testDestinationConnection(profile) {
+  const normalized = normalizeProfile(profile);
+  if (!normalized) {
+    throw new Error("Invalid profile.");
+  }
+
+  switch (normalized.destination) {
+    case "file":
+      return testFileConnection(normalized);
+    case "notion":
+      return testNotionConnection();
+    case "remote":
+      return testRemoteConnection();
+    case "supabase":
+      return testSupabaseConnection();
+    default:
+      throw new Error(`Unsupported destination: ${normalized.destination}`);
+  }
+}
+
+async function testFileConnection(profile) {
+  const outputDir = path.resolve(CLI_CWD, profile.outputDir || "./exports");
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.accessSync(outputDir, fs.constants.W_OK);
+  return `OK: file destination writable at ${outputDir}`;
+}
+
+async function testNotionConnection() {
+  const notionToken = process.env.NOTION_TOKEN;
+  const notionDatabaseId = process.env.NOTION_DATABASE_ID;
+  if (!notionToken || !notionDatabaseId) {
+    throw new Error("Missing NOTION_TOKEN or NOTION_DATABASE_ID.");
+  }
+
+  const response = await fetch(`https://api.notion.com/v1/databases/${notionDatabaseId}`, {
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      "Notion-Version": "2022-06-28",
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Notion test failed (${response.status}): ${text}`);
+  }
+
+  return `OK: Notion database reachable (${notionDatabaseId})`;
+}
+
+async function testRemoteConnection() {
+  const apiUrl = process.env.NOTION_SYNC_API_URL;
+  if (!apiUrl) {
+    throw new Error("Missing NOTION_SYNC_API_URL.");
+  }
+
+  const healthUrl = apiUrl.replace(/\/api\/sync\/?$/, "/api/health");
+  const response = await fetch(healthUrl);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Remote test failed (${response.status}): ${text}`);
+  }
+
+  return `OK: remote intake reachable (${healthUrl})`;
+}
+
+async function testSupabaseConnection() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+  const supabaseTable = process.env.SUPABASE_TABLE || "session_exports";
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_KEY.");
+  }
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/${supabaseTable}?select=id&limit=1`, {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Supabase test failed (${response.status}): ${text}`);
+  }
+
+  return `OK: Supabase table reachable (${supabaseTable})`;
+}
+
 app.whenReady().then(() => {
   ipcMain.handle("notion-sync:command", async (_event, command, extraArgs = []) => {
     if (!["init", "doctor", "status", "report", "open", "dry-run", "run", "help", "remote", "export-codex", "export-codex-latest"].includes(command)) {
@@ -114,6 +227,10 @@ app.whenReady().then(() => {
   ipcMain.handle("notion-sync:profiles:save", async (_event, profiles) => {
     saveProfiles(Array.isArray(profiles) ? profiles : DEFAULT_PROFILES);
     return loadProfiles();
+  });
+
+  ipcMain.handle("notion-sync:profiles:test", async (_event, profile) => {
+    return testDestinationConnection(profile);
   });
 
   createWindow();

@@ -13,4 +13,7 @@ contextBridge.exposeInMainWorld("notionSyncDesktop", {
   saveProfiles(profiles) {
     return ipcRenderer.invoke("notion-sync:profiles:save", profiles);
   },
+  testProfile(profile) {
+    return ipcRenderer.invoke("notion-sync:profiles:test", profile);
+  },
 });

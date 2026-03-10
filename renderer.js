@@ -8,6 +8,7 @@ const profileSelect = document.querySelector("#profile-select");
 const latestCountInput = document.querySelector("#latest-count");
 const outputDirInput = document.querySelector("#output-dir");
 const runProfileButton = document.querySelector("#run-profile");
+const testProfileButton = document.querySelector("#test-profile");
 const saveProfileButton = document.querySelector("#save-profile");
 
 let profiles = [];
@@ -97,6 +98,33 @@ saveProfileButton.addEventListener("click", async () => {
 
   profiles = await window.notionSyncDesktop.saveProfiles(next);
   renderProfiles(id);
+});
+
+testProfileButton.addEventListener("click", async () => {
+  const profile = profiles.find((item) => item.id === profileSelect.value) || profiles[0];
+  if (!profile) {
+    commandOutput.textContent = "No export profile available.";
+    statusPill.textContent = "Error";
+    return;
+  }
+
+  const latest = Math.max(1, Number.parseInt(latestCountInput.value || "1", 10) || 1);
+  const activeProfile = {
+    ...profile,
+    latest,
+    outputDir: profile.destination === "file" ? outputDirInput.value.trim() || "./exports" : "",
+  };
+
+  try {
+    statusPill.textContent = "Testing";
+    lastCommand.textContent = `test ${activeProfile.destination}`;
+    const result = await window.notionSyncDesktop.testProfile(activeProfile);
+    commandOutput.textContent = result;
+    statusPill.textContent = "Ready";
+  } catch (error) {
+    commandOutput.textContent = error.message || String(error);
+    statusPill.textContent = "Error";
+  }
 });
 
 profileSelect.addEventListener("change", () => {
