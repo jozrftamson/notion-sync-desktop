@@ -6,14 +6,11 @@ const commandButtons = document.querySelectorAll("[data-command]");
 const openPageButton = document.querySelector("#open-page");
 const profileSelect = document.querySelector("#profile-select");
 const latestCountInput = document.querySelector("#latest-count");
+const outputDirInput = document.querySelector("#output-dir");
 const runProfileButton = document.querySelector("#run-profile");
+const saveProfileButton = document.querySelector("#save-profile");
 
-const profileArgs = {
-  file: ["--destination", "file", "--output-dir", "./exports"],
-  notion: ["--destination", "notion"],
-  remote: ["--destination", "remote"],
-  supabase: ["--destination", "supabase"],
-};
+let profiles = [];
 
 async function run(command, options = {}) {
   statusPill.textContent = "Running";
@@ -65,13 +62,87 @@ for (const button of commandButtons) {
 openPageButton.addEventListener("click", () => run("open", { open: true }));
 
 runProfileButton.addEventListener("click", () => {
+  const profile = profiles.find((item) => item.id === profileSelect.value) || profiles[0];
+  if (!profile) {
+    commandOutput.textContent = "No export profile available.";
+    statusPill.textContent = "Error";
+    return;
+  }
   const latestCount = Math.max(1, Number.parseInt(latestCountInput.value || "1", 10) || 1);
-  const profile = profileSelect.value || "file";
-  const args = ["--latest", String(latestCount), ...profileArgs[profile]];
+  const args = ["--latest", String(latestCount), "--destination", profile.destination];
+  if (profile.destination === "file") {
+    args.push("--output-dir", outputDirInput.value.trim() || "./exports");
+  }
   run("export-codex-latest", { args });
 });
+
+saveProfileButton.addEventListener("click", async () => {
+  const selected = profiles.find((item) => item.id === profileSelect.value) || profiles[0];
+  const destination = selected?.destination || "file";
+  const outputDir = destination === "file" ? outputDirInput.value.trim() || "./exports" : "";
+  const latest = Math.max(1, Number.parseInt(latestCountInput.value || "1", 10) || 1);
+  const name = window.prompt("Profile name", selected?.name || `${destination} profile`);
+  if (!name) {
+    return;
+  }
+
+  const id = slugify(name);
+  const next = profiles.filter((item) => item.id !== id).concat({
+    id,
+    name,
+    destination,
+    latest,
+    outputDir,
+  });
+
+  profiles = await window.notionSyncDesktop.saveProfiles(next);
+  renderProfiles(id);
+});
+
+profileSelect.addEventListener("change", () => {
+  syncProfileInputs();
+});
+
+function renderProfiles(selectedId) {
+  profileSelect.innerHTML = "";
+  for (const profile of profiles) {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    option.textContent = profile.name;
+    profileSelect.appendChild(option);
+  }
+
+  const fallbackId = selectedId && profiles.some((item) => item.id === selectedId) ? selectedId : profiles[0]?.id;
+  if (fallbackId) {
+    profileSelect.value = fallbackId;
+  }
+  syncProfileInputs();
+}
+
+function syncProfileInputs() {
+  const profile = profiles.find((item) => item.id === profileSelect.value) || profiles[0];
+  if (!profile) {
+    return;
+  }
+  latestCountInput.value = String(profile.latest || 1);
+  outputDirInput.value = profile.outputDir || "./exports";
+  outputDirInput.disabled = profile.destination !== "file";
+}
+
+function slugify(value) {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "profile";
+}
 
 refreshStatus().then(() => {
   lastCommand.textContent = "status";
   commandOutput.textContent = statusOutput.textContent;
+});
+
+window.notionSyncDesktop.listProfiles().then((loadedProfiles) => {
+  profiles = Array.isArray(loadedProfiles) ? loadedProfiles : [];
+  renderProfiles();
 });

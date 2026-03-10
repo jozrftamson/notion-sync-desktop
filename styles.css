@@ -162,6 +162,10 @@ h1 {
   width: 84px;
 }
 
+#output-dir {
+  width: 180px;
+}
+
 button {
   border: 1px solid var(--line);
   border-radius: 999px;

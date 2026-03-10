@@ -59,14 +59,13 @@
         <div class="profile-controls">
           <label for="profile-select">Export profile</label>
           <select id="profile-select">
-            <option value="file">File archive</option>
-            <option value="notion">Notion page</option>
-            <option value="remote">Remote intake</option>
-            <option value="supabase">Supabase row</option>
           </select>
           <label for="latest-count">Latest sessions</label>
           <input id="latest-count" type="number" min="1" max="20" value="1" />
+          <label for="output-dir">Output dir</label>
+          <input id="output-dir" type="text" value="./exports" placeholder="./exports" />
           <button id="run-profile" class="primary">Run Profile</button>
+          <button id="save-profile">Save Profile</button>
         </div>
       </section>
 

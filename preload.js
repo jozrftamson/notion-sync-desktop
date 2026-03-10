@@ -7,4 +7,10 @@ contextBridge.exposeInMainWorld("notionSyncDesktop", {
   openLastPage() {
     return ipcRenderer.invoke("notion-sync:open-url");
   },
+  listProfiles() {
+    return ipcRenderer.invoke("notion-sync:profiles:list");
+  },
+  saveProfiles(profiles) {
+    return ipcRenderer.invoke("notion-sync:profiles:save", profiles);
+  },
 });
