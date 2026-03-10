@@ -24,9 +24,9 @@ function createWindow() {
   win.loadFile(path.join(APP_DIR, "index.html"));
 }
 
-function runCli(command) {
+function runCli(command, extraArgs = []) {
   return new Promise((resolve, reject) => {
-    execFile(CLI_PATH, [command], { cwd: CLI_CWD }, (error, stdout, stderr) => {
+    execFile(CLI_PATH, [command, ...extraArgs], { cwd: CLI_CWD }, (error, stdout, stderr) => {
       if (error) {
         reject(new Error(stderr.trim() || error.message));
         return;
@@ -37,11 +37,11 @@ function runCli(command) {
 }
 
 app.whenReady().then(() => {
-  ipcMain.handle("notion-sync:command", async (_event, command) => {
-    if (!["init", "doctor", "status", "report", "open", "dry-run", "run", "help", "remote"].includes(command)) {
+  ipcMain.handle("notion-sync:command", async (_event, command, extraArgs = []) => {
+    if (!["init", "doctor", "status", "report", "open", "dry-run", "run", "help", "remote", "export-codex", "export-codex-latest"].includes(command)) {
       throw new Error(`Unsupported command: ${command}`);
     }
-    return runCli(command);
+    return runCli(command, extraArgs);
   });
 
   ipcMain.handle("notion-sync:open-url", async () => {

@@ -7,12 +7,12 @@ const openPageButton = document.querySelector("#open-page");
 
 async function run(command, options = {}) {
   statusPill.textContent = "Running";
-  lastCommand.textContent = command;
+  lastCommand.textContent = options.args?.length ? `${command} ${options.args.join(" ")}` : command;
 
   try {
     const result = options.open
       ? await window.notionSyncDesktop.openLastPage()
-      : await window.notionSyncDesktop.runCommand(command);
+      : await window.notionSyncDesktop.runCommand(command, options.args || []);
 
     commandOutput.textContent = result || "Command completed with no output.";
 
@@ -46,7 +46,10 @@ async function refreshStatus() {
 }
 
 for (const button of commandButtons) {
-  button.addEventListener("click", () => run(button.dataset.command));
+  button.addEventListener("click", () => {
+    const args = button.dataset.args ? button.dataset.args.split(" ").filter(Boolean) : [];
+    run(button.dataset.command, { args });
+  });
 }
 
 openPageButton.addEventListener("click", () => run("open", { open: true }));

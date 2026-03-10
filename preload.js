@@ -1,8 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("notionSyncDesktop", {
-  runCommand(command) {
-    return ipcRenderer.invoke("notion-sync:command", command);
+  runCommand(command, extraArgs = []) {
+    return ipcRenderer.invoke("notion-sync:command", command, extraArgs);
   },
   openLastPage() {
     return ipcRenderer.invoke("notion-sync:open-url");
