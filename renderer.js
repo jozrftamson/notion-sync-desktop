@@ -4,6 +4,16 @@ const statusPill = document.querySelector("#status-pill");
 const lastCommand = document.querySelector("#last-command");
 const commandButtons = document.querySelectorAll("[data-command]");
 const openPageButton = document.querySelector("#open-page");
+const profileSelect = document.querySelector("#profile-select");
+const latestCountInput = document.querySelector("#latest-count");
+const runProfileButton = document.querySelector("#run-profile");
+
+const profileArgs = {
+  file: ["--destination", "file", "--output-dir", "./exports"],
+  notion: ["--destination", "notion"],
+  remote: ["--destination", "remote"],
+  supabase: ["--destination", "supabase"],
+};
 
 async function run(command, options = {}) {
   statusPill.textContent = "Running";
@@ -53,6 +63,13 @@ for (const button of commandButtons) {
 }
 
 openPageButton.addEventListener("click", () => run("open", { open: true }));
+
+runProfileButton.addEventListener("click", () => {
+  const latestCount = Math.max(1, Number.parseInt(latestCountInput.value || "1", 10) || 1);
+  const profile = profileSelect.value || "file";
+  const args = ["--latest", String(latestCount), ...profileArgs[profile]];
+  run("export-codex-latest", { args });
+});
 
 refreshStatus().then(() => {
   lastCommand.textContent = "status";

@@ -50,6 +50,26 @@
         <button data-command="export-codex-latest" data-args="--destination supabase">Export to Supabase</button>
       </section>
 
+      <section class="profile-strip">
+        <div class="profile-copy">
+          <p class="eyebrow">Profiles</p>
+          <h2>Run a saved export path</h2>
+          <p>Use preset delivery profiles for file archiving, Notion pages, remote intake, or Supabase storage.</p>
+        </div>
+        <div class="profile-controls">
+          <label for="profile-select">Export profile</label>
+          <select id="profile-select">
+            <option value="file">File archive</option>
+            <option value="notion">Notion page</option>
+            <option value="remote">Remote intake</option>
+            <option value="supabase">Supabase row</option>
+          </select>
+          <label for="latest-count">Latest sessions</label>
+          <input id="latest-count" type="number" min="1" max="20" value="1" />
+          <button id="run-profile" class="primary">Run Profile</button>
+        </div>
+      </section>
+
       <section class="panels">
         <article class="panel">
           <div class="panel-head">
